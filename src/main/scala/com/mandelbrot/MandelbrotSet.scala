@@ -16,13 +16,9 @@ object MandelbrotSet {
 
   val black = 0
   val max_iterations = 1000
-  val colors: IndexedSeq[Int] = (0 to max_iterations).map(i => {
+  val colors: IndexedSeq[Int] = (0 to max_iterations).map(i => Color.HSBtoRGB(i / 256f, 1, i / (i + 8f)))
+  val hues2 = (0 to max_iterations).map(i => (i / 256f, 1, i / (i + 8f)))
 
-    println(s"${i / 256f}, 1, ${i / (i + 8f)}")
-    Color.HSBtoRGB(i / 256f, 1, i / (i + 8f))
-  }
-
-  )
   var zoom = 4.0
   var shiftX = 0.0
   var shiftY = 0.0
@@ -83,7 +79,7 @@ object MandelbrotSet {
       iterations = iterations + 1
     }
 
-  /*  if (iterations < max_iterations) {
+    if (iterations < max_iterations) {
       // sqrt of inner term removed using log simplification rules.
       val log_zn = log(x * x + y * y) / 2
       val nu = log(log_zn / log(2)) / log(2)
@@ -93,7 +89,7 @@ object MandelbrotSet {
       // center to radius 2, NOT our bailout radius.
       iterations = iterations + 1 - nu
     }
-*/
+
     iterations
 
   }
@@ -109,7 +105,7 @@ object MandelbrotSet {
     val m = (0 until height).par.map(row => {
       (0 until width).map(col => {
 
-        val iterations = floor(mandel(col, row, zoom, shiftX, shiftY))
+        val iterations = mandel(col, row, zoom, shiftX, shiftY)
 
 
 
@@ -134,7 +130,7 @@ object MandelbrotSet {
 
 
       val hue = 102400* (0 until iterations).foldLeft(0.0d)( (a:Double,i:Int) => a + (histogram(i) / total)  )
-      println(hue)
+      //println(hue)
       Color.HSBtoRGB(hue.toFloat, 1, iterations / (iterations + 8f))
       //hue
     })
@@ -148,21 +144,27 @@ object MandelbrotSet {
 
         if (iterations < max_iterations) {
           //  image.setRGB(col, row, colors((max_iterations*hue).toInt))
-          image.setRGB(col, row, hues(iterations.toInt-1))
+          //image.setRGB(col, row, hues(iterations.toInt-1))
 
-          //image.setRGB(col, row, colors((iterations).toInt))
+          //image.setRGB(col, row, new Color(max_iterations-iterations, max_iterations-iterations, max_iterations-iterations).getRGB)
 
+          val l =  max_iterations - iterations
+          //image.setRGB(col, row, l | (l << 8))
 
           //println(iteration)
 
-  //        val color1 = hues(floor(iterations).toInt)
-//          val color2 = hues(floor(iterations).toInt + 1)
+          val color1 = hues2(floor(iterations).toInt)
+          val color2 = hues2(floor(iterations + 1).toInt )
           // iteration % 1 = fractional part of iteration.
           //println(s"$iteration ${iteration % 1}")
-    //      val color = linearInterpolate(color1, color2, iterations % 1)
+          //println(iterations % 1)
+          val h = linearInterpolate(color1._1, color2._1, iterations % 1)
+          val b = linearInterpolate(color1._3, color2._3, iterations % 1)
        //   println(s"$color1 $color2 $color")
           //else image.setRGB(col, row, black)
-      //    image.setRGB(col, row, Color.HSBtoRGB(color.toFloat, 1, 1))
+          //image.setRGB(col, row, Color.HSBtoRGB(color.toFloat, 1, (iterations / (iterations + 8f)).toFloat ))
+          image.setRGB(col, row, Color.HSBtoRGB(h.toFloat, 1, b.toFloat))
+          //image.setRGB(col, row, colors(iterations.toInt))
         }
       })
     })
