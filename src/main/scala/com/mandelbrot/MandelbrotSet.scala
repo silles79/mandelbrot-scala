@@ -13,17 +13,23 @@ import javax.swing.{ImageIcon, JFrame, JLabel}
 
 object MandelbrotSet {
 
-  val width = 1920
-  val height = 1024
+  val width = 1920 / 2
+  val height = 1024 /2
 
   val black = 0
   val max_iterations = 1000
-  val pallete = (0 to max_iterations).map(i => (i / 256f, 1, i / (i + 8f)))
+  val palleta = (0 to max_iterations).map(i => (i / 256f, 1, i / (i + 8f)))
 
   var zoom = 4.0
   var speed = 1.2
   var shiftX = 0.0
   var shiftY = 0.0
+
+  //zoom = 0.06037975301988161
+  //shiftX = -0.7517836387458078
+  //shiftY = -0.08966622429551523
+
+  //zoom:0.06037975301988161 shiftX:-0.7517836387458078 shiftY-0.08966622429551523 time:1671 m
 
   def main(args: Array[String]): Unit = {
 
@@ -31,7 +37,7 @@ object MandelbrotSet {
 
     val image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB)
 
-    draw(image, zoom, 0.0, 0.0)
+    draw(image, zoom, shiftX, shiftY)
 
     f.getContentPane.add(new JLabel(new ImageIcon(image)))
     f.pack()
@@ -76,7 +82,7 @@ object MandelbrotSet {
     var x = 0.0
     var y = 0.0
     var iterations = 0.0
-    while (x * x + y * y < 65536 && iterations < max_iterations) {
+    while (x * x + y * y < (2 << 16) && iterations < max_iterations) {
       val x_new = x * x - y * y + c_re
       y = 2 * x * y + c_im
       x = x_new
@@ -132,13 +138,12 @@ object MandelbrotSet {
 
         if (iterations < max_iterations) {
 
-          val color1 = pallete(floor(iterations).toInt)
-          val color2 = pallete(floor(iterations + 1).toInt )
-          val h = color1._1 //linearInterpolate(color1._1, color2._1, iterations % 1)
+          val color1 = palleta(floor(iterations).toInt)
+          val color2 = palleta(floor(iterations + 1).toInt )
+          val h = linearInterpolate(color1._1, color2._1, iterations % 1)
           val b = linearInterpolate(color1._3, color2._3, iterations % 1)
 
           image.setRGB(col, row, Color.HSBtoRGB(h.toFloat, 1, b.toFloat))
-          //image.setRGB(col, row, colors(iterations.toInt))
         }
       })
     })
