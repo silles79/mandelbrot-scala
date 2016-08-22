@@ -1,7 +1,7 @@
 package com.mandelbrot
 
 import java.awt.Color
-import java.awt.event.{MouseEvent, MouseListener}
+import java.awt.event._
 import java.awt.image.BufferedImage
 import javax.swing.{ImageIcon, JFrame, JLabel}
 
@@ -17,8 +17,12 @@ object MandelbrotSet {
   val height = 1024
 
   val black = 0
-  val max_iterations = 1000
-  val palleta = (0 to max_iterations).map(i => ((i) / 256f, 1, i / (i + 8f)))
+  val max_iterations = 512
+  //var palleta = (0 to max_iterations).map(i => ((i+256*3/3.5f) / 512f / 3.5f, 1, i / (i + 8f)))
+
+  var ps = 300f
+  var pd = 600f
+  def palleta(i:Int) = ((i+ps) / pd, 1, i / (i + 8f))
 
   var zoom = 4.0
   var speed = 1.2
@@ -51,13 +55,41 @@ object MandelbrotSet {
     f.repaint()
     f.setVisible(true)
 
-    val t = (1 to 10).map(f =>
+    /*
+    val t = (1 to 100).map(f =>
       timed("Benchmark") {
-        draw(image, 4.0, 0.0, 0)
+        draw(image, zoom, shiftX, shiftY)
       }
     ).sum
 
-    logger.info(s"${t / 10.0 / 1000 / 1000}")
+    logger.info(s"${t / 100.0 / 1000 / 1000}")
+*/
+
+    f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE)
+
+    f.addKeyListener(new KeyListener {
+
+      override def keyTyped(e: KeyEvent): Unit = {
+      }
+
+      override def keyPressed(e: KeyEvent): Unit = {
+        e.getKeyCode match {
+          case 37 => pd = pd + 4
+          case 39 => pd = pd - 4
+          case 38 => ps = ps + 4
+          case 40 => ps = ps - 4
+          case _ => logger.info(s"${e.getKeyCode}")
+        }
+
+        logger.info(s"ps=$ps pd=$pd")
+
+        draw(image, zoom, shiftX, shiftY)
+        f.repaint()
+
+      }
+
+      override def keyReleased(e: KeyEvent): Unit = {}
+    })
 
     f.addMouseListener(new MouseListener {
 
@@ -146,7 +178,7 @@ object MandelbrotSet {
     g.fillRect(0, 0, width, height)
 
     (0 until height).par.foreach(row => {
-      (0 until width).foreach(col => {
+      (0 until width).par.foreach(col => {
 
         val iterations = mandel(col, row, zoom, shiftX, shiftY)
         if (iterations < max_iterations) {
@@ -162,10 +194,11 @@ object MandelbrotSet {
 
     def intToRGB(rgb: Int) = Array((rgb >> 16) & 0xFF, (rgb >> 8) & 0xFF, (rgb >> 0) & 0xFF)
 
-   /* palleta.zipWithIndex.foreach(color => {
-      g.setColor(new Color(Color.HSBtoRGB(color._1._1, color._1._2.toFloat, color._1._3)))
-      g.fillRect(color._2 * 1, 0, 1, 10)
-    }) */
+    (0 to max_iterations) foreach(i => {
+      val c = palleta(i)
+      g.setColor(new Color(Color.HSBtoRGB(c._1, c._2, c._3)))
+      g.fillRect(i * 1, 0, 1, 10)
+    })
 
     val e = System.currentTimeMillis()
 
